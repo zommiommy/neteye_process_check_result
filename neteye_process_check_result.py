@@ -167,13 +167,6 @@ if __name__ == "__main__":
 
     args = vars(parser.parse_args())
 
-    # Setup the logger
-    logging.basicConfig(
-        filename=,
-        level=logging.INFO,
-        format=FORMAT
-    )
-
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     
@@ -181,7 +174,7 @@ if __name__ == "__main__":
 
     shandler = logging.StreamHandler(sys.stdout)
     shandler.setLevel(logging.INFO)
-    handler.setFormatter(formatter)
+    shandler.setFormatter(formatter)
     logger.addHandler(shandler)
 
     fhandler = logging.FileHandler(LOG_FILE.format(**args))
