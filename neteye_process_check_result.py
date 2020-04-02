@@ -157,13 +157,8 @@ if __name__ == "__main__":
 
     args = vars(parser.parse_args())
 
-    args = {
-        k: urllib.quote(v).replace("/", "%2F") if type(v) == str else v
-        for k, v in args.items()
-    }
-
-    # Remove eventual spaces and sharps from the service name
-    args["service"] = re.sub(r"[# ]+", r"_", args["service"])
+    args["host"] = urllib.quote(args["host"]).replace("/", "%2F")
+    args["service"] = urllib.quote(args["service"]).replace("/", "%2F")
 
     # Setup the logger
     logging.basicConfig(
