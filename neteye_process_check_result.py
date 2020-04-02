@@ -16,7 +16,7 @@ USER="director"
 PW_FILE="/neteye/shared/icinga2/conf/icinga2/conf.d/director-user.conf"
 with open(PW_FILE) as f:
     PW = f.read()
-    
+
 
 LOG_FILE = """/neteye/shared/tornado/data/archive/all/tornado_{rule}_creation.log"""
 
@@ -57,6 +57,9 @@ def process_check_result():
         url,
         json=data,
         auth=(USER, PW), verify=False,
+        headers={
+            'Accept': 'application/json',
+        }
     )
 
     logging.info("Got response with status code %d", r.status_code)
@@ -92,6 +95,9 @@ def create_service():
         url,
         json=data,
         auth=(USER, PW), verify=False,
+        headers={
+            'Accept': 'application/json',
+        }
     )
 
     logging.info("Got response with status code %d", r.status_code)
@@ -127,6 +133,9 @@ def create_host():
         url,
         json=data,
         auth=(USER, PW), verify=False,
+        headers={
+            'Accept': 'application/json',
+        }
     )
 
     logging.info("Got response with status code %d", r.status_code)
