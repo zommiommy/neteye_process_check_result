@@ -164,9 +164,6 @@ if __name__ == "__main__":
 
     args = vars(parser.parse_args())
 
-    args["host"] = 
-    args["service"] = urllib.quote(args["service"]).replace("/", "%2F")
-
     # Setup the logger
     logging.basicConfig(
         filename=LOG_FILE.format(**args),
