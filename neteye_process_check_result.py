@@ -41,7 +41,7 @@ def retry(max_times=4, sleep_time=1):
 def process_check_result():
     url = NETEYE_URL +  "/v1/actions/process-check-result"
     logging.info("[iC] process_passive_check on url %s", url)
-    
+
     data = {
             "type": "Service",
             "filter": "host.name==\"{host}\" && service.name==\"{service}\"".format(**args),
@@ -55,7 +55,10 @@ def process_check_result():
     r = requests.post(
         url,
         data=data,
-        auth=(USER, PW), verify=False
+        auth=(USER, PW), verify=False,
+        headers={
+            'Accept': 'application/json',
+        }
     )
 
     logging.info("Got response with status code %d", r.status_code)
@@ -90,7 +93,10 @@ def create_service():
     r = requests.put(
         url,
         data=data,
-        auth=(USER, PW), verify=False
+        auth=(USER, PW), verify=False,
+        headers={
+            'Accept': 'application/json',
+        }
     )
 
     logging.info("Got response with status code %d", r.status_code)
@@ -125,7 +131,10 @@ def create_host():
     r = requests.put(
         url,
         data=data,
-        auth=(USER, PW), verify=False
+        auth=(USER, PW), verify=False,
+        headers={
+            'Accept': 'application/json',
+        }
     )
 
     logging.info("Got response with status code %d", r.status_code)
