@@ -50,7 +50,7 @@ def process_check_result():
             "check_source":os.uname(),
             "pretty":True,
         },
-        auth=(USER, PW)
+        auth=(USER, PW), verify=False
     )
     logging.info("Got response with status code %d", r.status_code)
 
@@ -77,7 +77,7 @@ def create_service():
                 "vars.Tornado_Rule":args["rule"],
             }
         },
-        auth=(USER, PW)
+        auth=(USER, PW), verify=False
     )
 
     logging.info("Got response with status code %d", r.status_code)
@@ -104,7 +104,7 @@ def create_host():
                 "vars.Tornado_Rule":args["rule"],
             }
         },
-        auth=(USER, PW)
+        auth=(USER, PW), verify=False
     )
 
     logging.info("Got response with status code %d", r.status_code)
