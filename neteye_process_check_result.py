@@ -66,7 +66,11 @@ def process_check_result():
     logging.info("Server response was %s", r.text)
 
     if r.status_code == 200:
-        return r.json()
+        data = r.json()
+        if data["results"] == []:
+            create_service()
+        else:
+            return data
     elif r.status_code in [500, 503]:
         create_service()
 
