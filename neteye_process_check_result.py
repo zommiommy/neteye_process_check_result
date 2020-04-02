@@ -83,10 +83,7 @@ def process_check_result():
 
 
 @retry()
-def create_service():rule
-Rule
-rule
-rule
+def create_service():
     url = "{neteye_url}/v1/objects/services/{host}!{service}".format(
         neteye_url=NETEYE_URL,
         host=urllib.quote(args["host"]).replace("/", "%2F"),
