@@ -97,7 +97,6 @@ rule
     data = {
             "templates":[args["service_template"]],
             "attrs":{
-                "vars.Tornado_Rule":args["rule"],
             }
     }
 
@@ -131,7 +130,6 @@ def create_host():
             "attrs":{
                 "address":"127.0.0.1",
                 "check_command":"hostalive",
-                "vars.Tornado_Rule":args["rule"],
             }
     }
 
@@ -164,7 +162,6 @@ if __name__ == "__main__":
     parser.add_argument("service_template", type=str, help="")
     parser.add_argument("plugin_output", type=str, help="")
     parser.add_argument("exit_status", type=int, help="")
-    parser.add_argument("rule", type=str, help="")
 
     args = vars(parser.parse_args())
 
