@@ -71,7 +71,7 @@ def process_check_result():
     if r.status_code == 200:
         data = r.json()
         if data["results"] == []:
-            create_host()
+            create_service()
         else:
             return data
     elif r.status_code in [500, 503]:
