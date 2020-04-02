@@ -56,7 +56,6 @@ def process_check_result():
             "pretty":True,
         }
 
-    logging.debug("[iC] sending data %s", data)
     r = requests.post(
         url,
         json=data,
@@ -73,7 +72,9 @@ def process_check_result():
             create_service()
         else:
             return data
-    elif r.status_code in [500, 503]:
+
+    logging.warning("[PC] Error : %s", r.text)
+    if r.status_code in [500, 503]:
         create_service()
 
 
@@ -92,7 +93,6 @@ def create_service():
                 "vars.Tornado_Rule":args["rule"],
             }
     }
-    logging.debug("[iC] sending data %s", data)
 
     r = requests.put(
         url,
@@ -105,7 +105,9 @@ def create_service():
 
     if r.status_code == 200:
         return r.json()
-    elif r.status_code in [500, 503]:
+    
+    logging.warning("[SC] Error : %s", r.text)
+    if r.status_code in [500, 503]:
         create_host()
 
 @retry()
@@ -124,7 +126,6 @@ def create_host():
                 "vars.Tornado_Rule":args["rule"],
             }
     }
-    logging.debug("[iC] sending data %s", data)
 
     r = requests.put(
         url,
