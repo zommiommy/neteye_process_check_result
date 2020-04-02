@@ -24,7 +24,7 @@ with open(PW_FILE) as f:
         sys.exit(-1)
 
 
-LOG_FILE = """/neteye/shared/tornado/data/archive/tornado_{rule}_creation.log"""
+LOG_FILE = """/neteye/shared/tornado/data/archive/neteye_process_check_result.log"""
 ####################################################################################################
 # Functions
 ####################################################################################################
