@@ -46,7 +46,7 @@ def process_check_result():
             "filter": "host.name==\"{host}\" && service.name==\"{service}\"".format(**args),
             "exit_status":args["exit_status"],
             "plugin_output":args["plugin_output"],
-            "check_source":os.uname(),
+            "check_source":os.uname()[1],
             "pretty":True,
         }
     logging.info("[iC] sending data %s", data)
