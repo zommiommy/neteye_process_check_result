@@ -158,9 +158,8 @@ if __name__ == "__main__":
     args = vars(parser.parse_args())
 
     args = {
-        k: urllib.quote(v)
+        k: urllib.quote(v) if type(v) == str else v
         for k, v in args.items()
-        if not k.startswith("__") and type(v) == str
     }
 
     # Remove eventual spaces and sharps from the service name
