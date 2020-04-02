@@ -44,7 +44,7 @@ def process_check_result():
         NETEYE_URL +  "/v1/actions/process-check-result",
         data={
             "type": "Service",
-            "filter": "host.name==\"{hostname}\" && service.name==\"{service}\"".format(**args),
+            "filter": "host.name==\"{host}\" && service.name==\"{service}\"".format(**args),
             "exit_status":args["exit_status"],
             "plugin_output":args["plugin_output"],
             "check_source":os.uname(),
