@@ -183,7 +183,7 @@ if __name__ == "__main__":
     logger.addHandler(fhandler)
 
     # Disable --insecure warnings
-    requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
+    # requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
 
     logging.info("START")
     data = process_check_result()
