@@ -145,7 +145,7 @@ def create_host():
         logging.info("[HC] OK : %s", r.json())
         return r.json()
     elif r.status_code in [500, 503]:
-        logging.warning("[HC] got error: %s", r.json()["errors"])
+        logging.warning("[HC] got error: %s", r.json())
         sys.exit(2)
 
 ####################################################################################################
