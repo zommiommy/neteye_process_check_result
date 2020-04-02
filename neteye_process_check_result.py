@@ -81,7 +81,7 @@ def create_service():
     logging.info("[iC] create_service on url %s", url)
 
     data = {
-            "templates":args["service_template"],
+            "templates":[args["service_template"]],
             "attrs":{
                 "vars.Tornado_Rule":args["rule"],
             }
@@ -111,7 +111,7 @@ def create_host():
     logging.info("[iC] create_service on url %s", url)
 
     data = {
-            "templates":args["host_template"],
+            "templates":[args["host_template"]],
             "attrs":{
                 "address":"127.0.0.1",
                 "check_command":"hostalive",
