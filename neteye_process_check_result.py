@@ -32,10 +32,15 @@ def retry(max_times=4, sleep_time=1):
     def retry_decorator(function):
         def wrapped(*args, **kwargs):
             for _ in range(max_times):
-                result = function(*args, **kwargs)
-                if result is not None:
-                    return result
-                time.sleep(sleep_time)
+                try:
+                    result = function(*args, **kwargs)
+                    if result is not None:
+                        return result
+                    time.sleep(sleep_time)
+                except requests.exceptions.Timeout:
+                    logging.warning("The function %s went in timeout". function.__name__)
+                except Exception as e:
+                    logging.warning("The function %s raised an exception". function.__name__)
             logging.warning(" [EXIT] %s reached max number of tries from the arguments %s", function.__name__, args)
             sys.exit(2)
         return wrapped
