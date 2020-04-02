@@ -10,7 +10,7 @@ import argparse
 ####################################################################################################
 # Constants
 ####################################################################################################
-NETEYE_URL = """monitor.irideos.it:5665"""
+NETEYE_URL = """https://100.67.0.25:5665"""
 USER="director"
 
 PW_FILE="/neteye/shared/icinga2/conf/icinga2/conf.d/director-user.conf"
