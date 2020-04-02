@@ -189,6 +189,9 @@ if __name__ == "__main__":
     fhandler.setFormatter(formatter)
     logger.addHandler(fhandler)
 
+    # Disable --insecure warnings
+    requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
+
     logging.info("START")
     data = process_check_result()
     logging.info("[PC] OK : %s", data["results"])
