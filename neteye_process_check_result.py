@@ -172,5 +172,5 @@ if __name__ == "__main__":
 
     logging.info("START")
     data = process_check_result()
-    logging.info("OK : %s", data["results"])
+    logging.info("[PC] OK : %s", data["results"])
     logging.info("STOP")
