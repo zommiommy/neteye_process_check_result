@@ -55,7 +55,7 @@ def process_check_result():
             "pretty":True,
         }
 
-    logging.info("[iC] sending data %s", data)
+    logging.debug("[iC] sending data %s", data)
     r = requests.post(
         url,
         json=data,
@@ -65,7 +65,7 @@ def process_check_result():
         }
     )
 
-    logging.info("Got response with status code %d", r.status_code)
+    logging.debug("Got response with status code %d", r.status_code)
     logging.info("Server response was %s", r.text)
 
     if r.status_code == 200:
@@ -75,7 +75,7 @@ def process_check_result():
         else:
             return data
     elif r.status_code in [500, 503]:
-        create_host()
+        create_service()
 
 
 @retry()
@@ -89,7 +89,7 @@ def create_service():
                 "vars.Tornado_Rule":args["rule"],
             }
     }
-    logging.info("[iC] sending data %s", data)
+    logging.debug("[iC] sending data %s", data)
 
     r = requests.put(
         url,
@@ -100,13 +100,13 @@ def create_service():
         }
     )
 
-    logging.info("Got response with status code %d", r.status_code)
+    logging.debug("Got response with status code %d", r.status_code)
     logging.info("Server response was %s", r.text)
 
     if r.status_code == 200:
         return r.json()
     elif r.status_code in [500, 503]:
-        sys.exit(2)
+        create_host()
 
 @retry()
 def create_host():
@@ -121,7 +121,7 @@ def create_host():
                 "vars.Tornado_Rule":args["rule"],
             }
     }
-    logging.info("[iC] sending data %s", data)
+    logging.debug("[iC] sending data %s", data)
 
     r = requests.put(
         url,
@@ -132,13 +132,13 @@ def create_host():
         }
     )
 
-    logging.info("Got response with status code %d", r.status_code)
+    logging.debug("Got response with status code %d", r.status_code)
     logging.info("Server response was %s", r.text)
 
     if r.status_code == 200:
         return r.json()
     elif r.status_code in [500, 503]:
-        create_service()
+        sys.exit(2)
 
 ####################################################################################################
 # Arguments parsing
