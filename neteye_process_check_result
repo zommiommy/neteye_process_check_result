@@ -1,0 +1,3 @@
+#!/bin/bash
+DIR=$(dirname "$(python -c "import os,sys; print(os.path.realpath(sys.argv[1]))" $0)")
+python $DIR/neteye_process_check_result.py "$@"
