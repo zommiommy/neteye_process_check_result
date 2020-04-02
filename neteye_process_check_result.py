@@ -158,7 +158,7 @@ if __name__ == "__main__":
     args = vars(parser.parse_args())
 
     args = {
-        k: urllib.quote(v) if type(v) == str else v
+        k: urllib.quote(v).replace("/", "%2F") if type(v) == str else v
         for k, v in args.items()
     }
 
