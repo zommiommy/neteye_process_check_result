@@ -2,7 +2,6 @@
 import os
 import re
 import sys
-import uuid
 import time
 import urllib
 import logging
@@ -25,8 +24,6 @@ with open(PW_FILE) as f:
 
 
 LOG_FILE = """/neteye/shared/tornado/data/archive/all/tornado_{rule}_creation.log"""
-
-UUID = uuid.uuid4()
 ####################################################################################################
 # Functions
 ####################################################################################################
@@ -35,7 +32,13 @@ def retry(max_times=4, sleep_time=1):
         def wrapped(*args, **kwargs):
             for _ in range(max_times):
                 result = function(*args, **kwargs)
-                if result is not None:urllib.urlencode(
+                if result is not None:
+                    return result
+                time.sleep(sleep_time)
+            logging.warning(" [EXIT] %s", args)
+            sys.exit(2)
+        return wrapped
+    return retry_decorator
 
 
 @retry()
@@ -86,7 +89,7 @@ def create_service():
                 "vars.Tornado_Rule":args["rule"],
             }
     }
-    logging.info("[iC] sending data %s", data)
+    logging.info("[iC] sending data %s", passdata)
 
     r = requests.put(
         url,
