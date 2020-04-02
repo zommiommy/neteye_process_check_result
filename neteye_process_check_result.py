@@ -38,9 +38,9 @@ def retry(max_times=4, sleep_time=1):
                         return result
                     time.sleep(sleep_time)
                 except requests.exceptions.Timeout:
-                    logging.warning("The function %s went in timeout". function.__name__)
+                    logging.warning("The function %s went in timeout", function.__name__)
                 except Exception as e:
-                    logging.warning("The function %s raised an exception %s". function.__name__, str(e))
+                    logging.warning("The function %s raised an exception %s", function.__name__, str(e))
             logging.warning(" [EXIT] %s reached max number of tries from the arguments %s", function.__name__, args)
             sys.exit(2)
         return wrapped
