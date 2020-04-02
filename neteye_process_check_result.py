@@ -158,7 +158,7 @@ if __name__ == "__main__":
     args = vars(parser.parse_args())
 
     args = {
-        k: urllib.urlencode(v)
+        k: urllib.quote(v)
         for k, v in args.items()
         if not k.startswith("__") and type(v) == str
     }
