@@ -4,6 +4,7 @@ import re
 import sys
 import uuid
 import time
+import urllib
 import logging
 import requests
 import argparse
@@ -34,13 +35,7 @@ def retry(max_times=4, sleep_time=1):
         def wrapped(*args, **kwargs):
             for _ in range(max_times):
                 result = function(*args, **kwargs)
-                if result is not None:
-                    return result
-                time.sleep(sleep_time)
-            logging.warning(" [EXIT] %s", args)
-            sys.exit(2)
-        return wrapped
-    return retry_decorator
+                if result is not None:urllib.urlencode(
 
 
 @retry()
@@ -158,6 +153,11 @@ parser.add_argument("exit_status", type=int, help="")
 parser.add_argument("rule", type=str, help="")
 
 args = vars(parser.parse_args())
+
+args = {
+    k: urllib.urlencode(v)
+    for k, v in args.items()
+}
 
 # Remove eventual spaces and sharps from the service name
 args["service"] = re.sub(r"[# ]+", r"_", args["service"])
