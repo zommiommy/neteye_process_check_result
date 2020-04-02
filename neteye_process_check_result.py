@@ -53,7 +53,6 @@ def process_check_result():
             "exit_status":args["exit_status"],
             "plugin_output":args["plugin_output"],
             "check_source":os.uname()[1],
-            "pretty":True,
         }
 
     r = requests.post(
@@ -75,7 +74,7 @@ def process_check_result():
             logging.info("OK : %s", data)
             return data
 
-    logging.warning("[PC] Error : %s", r.text)
+    logging.warning("[PC] Error : %s", r.text.replace("\n", ""))
     if r.status_code in [500, 503]:
         create_service()
 
@@ -109,7 +108,7 @@ def create_service():
         logging.info("OK : %s", r.json())
         return r.json()
     
-    logging.warning("[SC] Error : %s", r.text)
+    logging.warning("[SC] Error : %s", r.text.replace("\n", ""))
     if r.status_code in [500, 503]:
         create_host()
 
