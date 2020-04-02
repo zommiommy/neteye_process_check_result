@@ -39,7 +39,7 @@ def retry(max_times=4, sleep_time=1):
 
 @retry()
 def process_check_result():
-    url = NETEYE_URL +  "/v1/actions/process-check-result",
+    url = NETEYE_URL +  "/v1/actions/process-check-result"
     logging.info("[iC] process_passive_check on url %s", url)
     data = {
             "type": "Service",
