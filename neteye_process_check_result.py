@@ -89,7 +89,7 @@ def create_service():
                 "vars.Tornado_Rule":args["rule"],
             }
     }
-    logging.info("[iC] sending data %s", passdata)
+    logging.info("[iC] sending data %s", data)
 
     r = requests.put(
         url,
@@ -160,6 +160,7 @@ if __name__ == "__main__":
     args = {
         k: urllib.urlencode(v)
         for k, v in args.items()
+        if not k.startswith("__") and type(v) == str
     }
 
     # Remove eventual spaces and sharps from the service name
