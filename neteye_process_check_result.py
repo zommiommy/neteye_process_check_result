@@ -80,7 +80,11 @@ def process_check_result():
 
 @retry()
 def create_service():
-    url = "{neteye_url}/v1/objects/services/{host}!{service}".format(neteye_url=NETEYE_URL, **args)
+    url = "{neteye_url}/v1/objects/services/{host}!{service}".format(
+        neteye_url=NETEYE_URL,
+        host=urllib.quote(args["host"]).replace("/", "%2F"),
+        service=urllib.quote(args["service"]).replace("/", "%2F"),
+    )
     logging.info("[iC] create_service on url %s", url)
 
     data = {
@@ -110,7 +114,10 @@ def create_service():
 
 @retry()
 def create_host():
-    url = "{neteye_url}/v1/objects/hosts/{host}".format(neteye_url=NETEYE_URL, **args)
+    url = "{neteye_url}/v1/objects/hosts/{host}".format(
+        neteye_url=NETEYE_URL,
+        host=urllib.quote(args["host"]).replace("/", "%2F")
+    )
     logging.info("[iC] create_service on url %s", url)
 
     data = {
@@ -157,7 +164,7 @@ if __name__ == "__main__":
 
     args = vars(parser.parse_args())
 
-    args["host"] = urllib.quote(args["host"]).replace("/", "%2F")
+    args["host"] = 
     args["service"] = urllib.quote(args["service"]).replace("/", "%2F")
 
     # Setup the logger
