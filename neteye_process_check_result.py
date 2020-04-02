@@ -31,7 +31,7 @@ def retry(max_times=4, sleep_time=1):
                 if result is not None:
                     return result
                 time.sleep(sleep_time)
-            logging.warning(" [EXIT] {}", args)
+            logging.warning(" [EXIT] %s", args)
             sys.exit(2)
         return wrapped
     return retry_decorator
