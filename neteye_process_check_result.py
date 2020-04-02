@@ -15,7 +15,12 @@ USER="director"
 
 PW_FILE="/neteye/shared/icinga2/conf/icinga2/conf.d/director-user.conf"
 with open(PW_FILE) as f:
-    PW = f.read()
+    match = re.search(r"password *= *\"(.+)\"", f.read())
+    if match:
+        PW = match.group(1)
+    else:
+        print("CANNOT FIND PASSWORD")
+        sys.exit(-1)
 
 
 LOG_FILE = """/neteye/shared/tornado/data/archive/all/tornado_{rule}_creation.log"""
