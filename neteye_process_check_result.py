@@ -41,6 +41,7 @@ def retry(max_times=4, sleep_time=1):
 def process_check_result():
     url = NETEYE_URL +  "/v1/actions/process-check-result"
     logging.info("[iC] process_passive_check on url %s", url)
+    
     data = {
             "type": "Service",
             "filter": "host.name==\"{host}\" && service.name==\"{service}\"".format(**args),
@@ -49,13 +50,16 @@ def process_check_result():
             "check_source":os.uname()[1],
             "pretty":True,
         }
+
     logging.info("[iC] sending data %s", data)
     r = requests.post(
         url,
         data=data,
         auth=(USER, PW), verify=False
     )
+
     logging.info("Got response with status code %d", r.status_code)
+    logging.info("Server response was %s", r.text)
 
     if r.status_code == 200:
         data = r.json()
@@ -72,18 +76,26 @@ def process_check_result():
 
 @retry()
 def create_service():
-    r = requests.put(
-        "{neteye_url}/v1/objects/services/{host}!{service}".format(neteye_url=NETEYE_URL, **args),
-        data={
+    url = "{neteye_url}/v1/objects/services/{host}!{service}".format(neteye_url=NETEYE_URL, **args)
+    logging.info("[iC] create_service on url %s", url)
+
+    data = {
             "templates":args["service_template"],
             "attrs":{
                 "vars.Tornado_Rule":args["rule"],
             }
-        },
+    }
+    logging.info("[iC] sending data %s", data)
+
+    r = requests.put(
+        url,
+        data=data,
         auth=(USER, PW), verify=False
     )
 
     logging.info("Got response with status code %d", r.status_code)
+    logging.info("Server response was %s", r.text)
+
     if r.status_code == 200:
         data = r.json()
         if data["results"] == "":
@@ -97,20 +109,28 @@ def create_service():
 
 @retry()
 def create_host():
-    r = requests.put(
-        "{neteye_url}/v1/objects/hosts/{host}".format(neteye_url=NETEYE_URL, **args),
-        data={
+    url = "{neteye_url}/v1/objects/hosts/{host}".format(neteye_url=NETEYE_URL, **args)
+    logging.info("[iC] create_service on url %s", url)
+
+    data = {
             "templates":args["host_template"],
             "attrs":{
                 "address":"127.0.0.1",
                 "check_command":"hostalive",
                 "vars.Tornado_Rule":args["rule"],
             }
-        },
+    }
+    logging.info("[iC] sending data %s", data)
+
+    r = requests.put(
+        url,
+        data=data,
         auth=(USER, PW), verify=False
     )
 
     logging.info("Got response with status code %d", r.status_code)
+    logging.info("Server response was %s", r.text)
+
     if r.status_code == 200:
         data = r.json()
         if data["results"][0]["status"] == 200:
