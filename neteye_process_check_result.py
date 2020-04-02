@@ -168,12 +168,26 @@ if __name__ == "__main__":
     args = vars(parser.parse_args())
 
     # Setup the logger
-    FORMAT = "{uuid} %(levelname)s %(asctime)-15s %(message)s".format(uuid=uuid.uuid4())
     logging.basicConfig(
-        filename=LOG_FILE.format(**args),
+        filename=,
         level=logging.INFO,
         format=FORMAT
     )
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    
+    formatter = logging.Formatter("{uuid} %(levelname)s %(asctime)-15s %(message)s".format(uuid=uuid.uuid4()))
+
+    shandler = logging.StreamHandler(sys.stdout)
+    shandler.setLevel(logging.INFO)
+    handler.setFormatter(formatter)
+    logger.addHandler(shandler)
+
+    fhandler = logging.FileHandler(LOG_FILE.format(**args))
+    fhandler.setLevel(logging.INFO)
+    fhandler.setFormatter(formatter)
+    logger.addHandler(fhandler)
 
     logging.info("START")
     data = process_check_result()
