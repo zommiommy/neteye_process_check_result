@@ -65,14 +65,10 @@ def process_check_result():
     logging.info("Got response with status code %d", r.status_code)
     logging.info("Server response was %s", r.text)
 
-    data = r.json()
-    if data["results"] == []:
+    if r.status_code == 200:
+        return r.json()
+    elif r.status_code == 500:
         create_service()
-    elif data["results"][0]["status"] == 200:
-        logging.info("OK %s", data)
-        return data
-    elif data["results"][0]["status"] == 500:
-        sys.exit(2)
 
 
 @retry()
@@ -100,12 +96,9 @@ def create_service():
     logging.info("Got response with status code %d", r.status_code)
     logging.info("Server response was %s", r.text)
 
-    data = r.json()
-    if data["results"] == "":
-        create_service()
-    elif data["results"][0]["status"] == 200:
-        return data
-    elif data["resutls"][0]["status"] == 500:
+    if r.status_code == 200:
+        return r.json()
+    elif r.status_code == 500:
         create_host()
 
 @retry()
@@ -135,10 +128,9 @@ def create_host():
     logging.info("Got response with status code %d", r.status_code)
     logging.info("Server response was %s", r.text)
 
-    data = r.json()
-    if data["results"][0]["status"] == 200:
-        return data
-    elif data["resutls"][0]["status"] == 500:
+    if r.status_code == 200:
+        return r.json()
+    elif r.status_code == 500:
         sys.exit(2)
 
 ####################################################################################################
