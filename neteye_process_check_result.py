@@ -39,17 +39,20 @@ def retry(max_times=4, sleep_time=1):
 
 @retry()
 def process_check_result():
-    logging.info("[iC] process_passive_check")
-    r = requests.post(
-        NETEYE_URL +  "/v1/actions/process-check-result",
-        data={
+    url = NETEYE_URL +  "/v1/actions/process-check-result",
+    logging.info("[iC] process_passive_check on url %s", url)
+    data = {
             "type": "Service",
             "filter": "host.name==\"{host}\" && service.name==\"{service}\"".format(**args),
             "exit_status":args["exit_status"],
             "plugin_output":args["plugin_output"],
             "check_source":os.uname(),
             "pretty":True,
-        },
+        }
+    logging.info("[iC] sending data %s", data)
+    r = requests.post(
+        url,
+        data=data,
         auth=(USER, PW), verify=False
     )
     logging.info("Got response with status code %d", r.status_code)
