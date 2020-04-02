@@ -68,8 +68,10 @@ def process_check_result():
     if r.status_code == 200:
         data = r.json()
         if data["results"] == []:
+            logging.info("KO : %s", data)
             create_service()
         else:
+            logging.info("OK : %s", data)
             return data
 
     logging.warning("[PC] Error : %s", r.text)
@@ -131,6 +133,7 @@ def create_host():
     )
 
     if r.status_code == 200:
+        logging.info("OK : %s", r.json())
         return r.json()
     elif r.status_code in [500, 503]:
         logging.warning("[HC] got error: %s", r.json()["errors"])
