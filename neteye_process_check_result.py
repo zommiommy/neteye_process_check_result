@@ -67,7 +67,7 @@ def process_check_result():
 
     if r.status_code == 200:
         return r.json()
-    elif r.status_code == 500:
+    elif r.status_code in [500, 503]:
         create_service()
 
 
@@ -98,7 +98,7 @@ def create_service():
 
     if r.status_code == 200:
         return r.json()
-    elif r.status_code == 500:
+    elif r.status_code in [500, 503]:
         create_host()
 
 @retry()
@@ -130,7 +130,7 @@ def create_host():
 
     if r.status_code == 200:
         return r.json()
-    elif r.status_code == 500:
+    elif r.status_code in [500, 503]:
         sys.exit(2)
 
 ####################################################################################################
