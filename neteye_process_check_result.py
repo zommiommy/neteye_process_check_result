@@ -24,7 +24,7 @@ with open(PW_FILE) as f:
         sys.exit(-1)
 
 
-LOG_FILE = """/neteye/shared/tornado/data/archive/all/tornado_{rule}_creation.log"""
+LOG_FILE = """/neteye/shared/tornado/data/archive/tornado_{rule}_creation.log"""
 ####################################################################################################
 # Functions
 ####################################################################################################
@@ -83,7 +83,10 @@ def process_check_result():
 
 
 @retry()
-def create_service():
+def create_service():rule
+Rule
+rule
+rule
     url = "{neteye_url}/v1/objects/services/{host}!{service}".format(
         neteye_url=NETEYE_URL,
         host=urllib.quote(args["host"]).replace("/", "%2F"),
