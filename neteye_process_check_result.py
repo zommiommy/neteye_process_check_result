@@ -28,7 +28,7 @@ LOG_FILE = """/neteye/shared/tornado/data/archive/all/tornado_{rule}_creation.lo
 ####################################################################################################
 # Functions
 ####################################################################################################
-def retry(max_times=4, sleep_time=10):
+def retry(max_times=30, sleep_time=3):
     def retry_decorator(function):
         def wrapped(*args, **kwargs):
             for _ in range(max_times):
