@@ -35,7 +35,7 @@ def retry(max_times=4, sleep_time=1):
                 if result is not None:
                     return result
                 time.sleep(sleep_time)
-            logging.warning(" [EXIT] %s", args)
+            logging.warning(" [EXIT] %s reached max number of tries from the arguments %s", function.__name__, args)
             sys.exit(2)
         return wrapped
     return retry_decorator
@@ -71,11 +71,11 @@ def process_check_result():
     if r.status_code == 200:
         data = r.json()
         if data["results"] == []:
-            create_service()
+            create_host()
         else:
             return data
     elif r.status_code in [500, 503]:
-        create_service()
+        create_host()
 
 
 @retry()
@@ -106,7 +106,7 @@ def create_service():
     if r.status_code == 200:
         return r.json()
     elif r.status_code in [500, 503]:
-        create_host()
+        sys.exit(2)
 
 @retry()
 def create_host():
@@ -138,7 +138,7 @@ def create_host():
     if r.status_code == 200:
         return r.json()
     elif r.status_code in [500, 503]:
-        sys.exit(2)
+        create_service()
 
 ####################################################################################################
 # Arguments parsing
