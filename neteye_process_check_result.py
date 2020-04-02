@@ -53,6 +53,7 @@ def process_check_result():
             "exit_status":args["exit_status"],
             "plugin_output":args["plugin_output"],
             "check_source":os.uname()[1],
+            "pretty":True,
         }
 
     r = requests.post(
@@ -76,7 +77,12 @@ def process_check_result():
 
     logging.warning("[PC] Error : %s", r.text)
     if r.status_code in [500, 503]:
-    logging.debug("[iC] sending data %s", data)}!{service}".format(
+        create_service()
+
+
+@retry()
+def create_service():
+    url = "{neteye_url}/v1/objects/services/{host}!{service}".format(
         neteye_url=NETEYE_URL,
         host=urllib.quote(args["host"]).replace("/", "%2F"),
         service=urllib.quote(args["service"]).replace("/", "%2F"),
@@ -100,6 +106,7 @@ def process_check_result():
     )
 
     if r.status_code == 200:
+        logging.info("OK : %s", r.json())
         return r.json()
     
     logging.warning("[SC] Error : %s", r.text)
