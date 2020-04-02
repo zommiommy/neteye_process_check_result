@@ -66,11 +66,9 @@ def process_check_result():
         }
     )
 
-    logging.debug("Got response with status code %d", r.status_code)
 
     if r.status_code == 200:
         data = r.json()
-        logging.info("Server response was %s", r.text)
         if data["results"] == []:
             create_service()
         else:
@@ -86,7 +84,7 @@ def create_service():
         host=urllib.quote(args["host"]).replace("/", "%2F"),
         service=urllib.quote(args["service"]).replace("/", "%2F"),
     )
-    logging.info("[SC] create_service on url %s", url)
+    logging.info("[SC] creating service on url %s", url)
 
     data = {
             "templates":[args["service_template"]],
@@ -105,9 +103,6 @@ def create_service():
         }
     )
 
-    logging.debug("Got response with status code %d", r.status_code)
-    logging.info("Server response was %s", r.text)
-
     if r.status_code == 200:
         return r.json()
     elif r.status_code in [500, 503]:
@@ -119,7 +114,7 @@ def create_host():
         neteye_url=NETEYE_URL,
         host=urllib.quote(args["host"]).replace("/", "%2F")
     )
-    logging.info("[iC] create_service on url %s", url)
+    logging.info("[HC] creating host on url %s", url)
 
     data = {
             "templates":[args["host_template"]],
@@ -139,9 +134,6 @@ def create_host():
             'Accept': 'application/json',
         }
     )
-
-    logging.debug("Got response with status code %d", r.status_code)
-    logging.info("Server response was %s", r.text)
 
     if r.status_code == 200:
         return r.json()
