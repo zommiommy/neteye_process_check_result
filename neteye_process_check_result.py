@@ -2,6 +2,7 @@
 import os
 import re
 import sys
+import uuid
 import time
 import urllib
 import logging
@@ -44,7 +45,7 @@ def retry(max_times=4, sleep_time=1):
 @retry()
 def process_check_result():
     url = NETEYE_URL +  "/v1/actions/process-check-result"
-    logging.info("[iC] process_passive_check on url %s", url)
+    logging.info("[PC] process_check_result on url %s", url)
 
     data = {
             "type": "Service",
@@ -66,10 +67,10 @@ def process_check_result():
     )
 
     logging.debug("Got response with status code %d", r.status_code)
-    logging.info("Server response was %s", r.text)
 
     if r.status_code == 200:
         data = r.json()
+        logging.info("Server response was %s", r.text)
         if data["results"] == []:
             create_service()
         else:
@@ -85,7 +86,7 @@ def create_service():
         host=urllib.quote(args["host"]).replace("/", "%2F"),
         service=urllib.quote(args["service"]).replace("/", "%2F"),
     )
-    logging.info("[iC] create_service on url %s", url)
+    logging.info("[SC] create_service on url %s", url)
 
     data = {
             "templates":[args["service_template"]],
@@ -145,6 +146,7 @@ def create_host():
     if r.status_code == 200:
         return r.json()
     elif r.status_code in [500, 503]:
+        logging.warning("[HC] got error: %s", r.json()["errors"])
         sys.exit(2)
 
 ####################################################################################################
@@ -165,9 +167,14 @@ if __name__ == "__main__":
     args = vars(parser.parse_args())
 
     # Setup the logger
+    FORMAT = "{uuid} %(levelname)s %(asctime)-15s %(message)s".format(uuid=uuid.uuid4())
     logging.basicConfig(
         filename=LOG_FILE.format(**args),
-        level=logging.INFO
+        level=logging.INFO,
+        format=FORMAT
     )
 
-    process_check_result()
+    logging.info("START")
+    data = process_check_result()
+    logging.info("OK : %s", data["results"])
+    logging.info("STOP")
