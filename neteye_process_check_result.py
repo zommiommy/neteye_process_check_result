@@ -217,8 +217,8 @@ if __name__ == "__main__":
     shandler.setLevel(logging.INFO)
     shandler.setFormatter(formatter)
     logger.addHandler(shandler)
-
-    fhandler = logging.FileHandler(args["log_file"])
+    
+    fhandler = logging.FileHandler(os.path.join("/neteye/shared/tornado/data/archive/", args["log_file"]))
     fhandler.setLevel(logging.INFO)
     fhandler.setFormatter(formatter)
     logger.addHandler(fhandler)
