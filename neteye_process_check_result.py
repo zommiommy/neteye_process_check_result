@@ -32,10 +32,10 @@ with open(PW_FILE) as f:
 def lock(path):
     """I have already checked, the unlock works even if the subfunction exits with sys.exit"""
     def lock_internal(function):
-        def wrapped(*args, **kwargs):
-            with open(path, "a") as f:
+        def wrapped(args):
+            with open(path.format(**args).replace(" ", "_"), "a") as f:
                 fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-                result = function(*args, **kwargs)
+                result = function(args)
                 fcntl.flock(f.fileno(), fcntl.LOCK_UN) 
                 return result
         return wrapped
@@ -127,8 +127,7 @@ def process_check_result_request(args):
     logging.info("[PC] process_check_result on url %s", url)
 
     data = {
-            "type": "Service",
-            "filter": "host.name==\"{host}\" && service.name==\"{service}\"".format(**args),
+            "service": "{host}!{service}".format(**args),
             "exit_status":args["exit_status"],
             "plugin_output":args["plugin_output"],
             "check_source":os.uname()[1],
@@ -155,7 +154,6 @@ def process_check_result_request(args):
 # Functions
 ####################################################################################################
 
-@lock("/var/lock/process_check_result.create_host.lock")
 @retry()
 def create_host(args):
     status_code, data, text = create_host_request(args)
@@ -168,7 +166,7 @@ def create_host(args):
     sys.exit(2)
 
 
-@lock("/var/lock/process_check_result.create_service.lock")
+@lock("/var/lock/process_check_result_{service}_{host}.lock")
 @retry()
 def create_service(args):
     status_code, data, text = create_service_request(args)
@@ -217,14 +215,14 @@ if __name__ == "__main__":
     shandler.setLevel(logging.INFO)
     shandler.setFormatter(formatter)
     logger.addHandler(shandler)
-    
+
     fhandler = logging.FileHandler(os.path.join("/neteye/shared/tornado/data/archive/", args["log_file"]))
     fhandler.setLevel(logging.INFO)
     fhandler.setFormatter(formatter)
     logger.addHandler(fhandler)
 
     # Disable --insecure warnings
-    # requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
+    requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
 
     logging.info("START")
     data = process_check_result(args)
