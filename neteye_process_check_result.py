@@ -61,6 +61,34 @@ def retry(max_times=30, sleep_time=3):
 # Requests
 ####################################################################################################
 
+def check_service(args):
+    url = "{neteye_url}/v1/objects/services/{host}!{service}".format(
+        neteye_url=NETEYE_URL,
+        host=urllib.quote(args["host"]).replace("/", "%2F"),
+        service=urllib.quote(args["service"]).replace("/", "%2F"),
+    )
+    logging.info("[CS] Service check on url %s", url)
+
+    data = {
+            "templates":[args["service_template"]],
+    }
+
+    r = requests.get(
+        url,
+        json=data,
+        auth=(USER, PW), verify=False,
+        headers={
+            'Accept': 'application/json',
+        }
+    )
+
+    if r.status_code == 200:
+        logging.info("[CS] OK : %s", r.json())
+        return True
+
+    logging.warning("[CS] Error : %s", r.text.replace("\n", ""))
+    return False
+
 def create_host_request(args):
     url = "{neteye_url}/v1/objects/hosts/{host}".format(
         neteye_url=NETEYE_URL,
@@ -169,6 +197,8 @@ def create_host(args):
 @lock("/var/lock/process_check_result_{service}_{host}.lock")
 @retry()
 def create_service(args):
+    if check_service(args):
+        return "SERVICE EXISTS"
     status_code, data, text = create_service_request(args)
 
     if status_code == 200:
@@ -186,8 +216,10 @@ def process_check_result(args):
         return data
 
     logging.warning("[PC] Error : %s", text.replace("\n", ""))
-    create_service(args)
-    
+    if not check_service(args):
+        create_service(args)
+        sleep(0.2)
+        
 
 ####################################################################################################
 # Arguments parsing
@@ -206,18 +238,21 @@ if __name__ == "__main__":
 
     args = vars(parser.parse_args())
 
+    log_level = logging.INFO
+
     logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    logger.setLevel(log_level)
+    logging.addLevelName(logging.WARNING, 'WARN')
     
     formatter = logging.Formatter("{uuid} %(levelname)s %(asctime)-15s %(message)s".format(uuid=uuid.uuid4()))
 
     shandler = logging.StreamHandler(sys.stdout)
-    shandler.setLevel(logging.INFO)
+    shandler.setLevel(log_level)
     shandler.setFormatter(formatter)
     logger.addHandler(shandler)
 
     fhandler = logging.FileHandler(os.path.join("/neteye/shared/tornado/data/archive/", args["log_file"]))
-    fhandler.setLevel(logging.INFO)
+    fhandler.setLevel(log_level)
     fhandler.setFormatter(formatter)
     logger.addHandler(fhandler)
 
