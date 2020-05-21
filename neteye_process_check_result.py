@@ -8,7 +8,8 @@ import urllib
 import logging
 import requests
 import argparse
-from time import sleep
+from time import sleep, time
+from base64 import urlsafe_b64encode
 
 ####################################################################################################
 # Constants
@@ -33,9 +34,11 @@ def lock(path):
     """I have already checked, the unlock works even if the subfunction exits with sys.exit"""
     def lock_internal(function):
         def wrapped(args):
-            with open(path.format(**args).replace(" ", "_"), "a") as f:
+            args["hostb64"] = urlsafe_b64encode(args["host"].encode())
+            args["serviceb64"] = urlsafe_b64encode(args["service"].encode())
+            lock_path = path.format(**args)
+            with open(lock_path, "a") as f:
                 fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-                result = function(args)
                 fcntl.flock(f.fileno(), fcntl.LOCK_UN) 
                 return result
         return wrapped
@@ -83,7 +86,7 @@ def check_service(args):
     )
 
     if r.status_code == 200:
-        logging.info("[CS] OK : %s", r.json())
+        logging.info("[CS] OK")
         return True
 
     logging.warning("[CS] Error : %s", r.text.replace("\n", ""))
@@ -194,7 +197,7 @@ def create_host(args):
     sys.exit(2)
 
 
-@lock("/var/lock/process_check_result_{service}_{host}.lock")
+@lock("/var/lock/process_check_result_{serviceb64}_{hostb64}.lock")
 @retry()
 def create_service(args):
     if check_service(args):
