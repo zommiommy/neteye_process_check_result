@@ -1,31 +1,22 @@
-#!/bin/python
 import os
 import re
 import sys
-import uuid
-import fcntl
-import urllib
-import logging
-import requests
-import argparse
+import json
+import time
 from time import sleep, clock
-from base64 import urlsafe_b64encode
+import requests
+from flask import Flask, request
+from pprint import pprint
+from multiprocessing import Manager, Queue, cpu_count
+from threading import Thread
+from uuid import uuid4
 
 ####################################################################################################
-# Constants
+# Globals
 ####################################################################################################
-NETEYE_URL = """https://monitor.irideos.it:5665""" # MUST be https
-PROXY_URL  = """http://127.0.0.1:9966""" # MUST be http
-USER="director"
-
-PW_FILE="/neteye/shared/tornado/data/director-user.conf"
-with open(PW_FILE) as f:
-    match = re.search(r"password *= *\"(.+)\"", f.read())
-    if match:
-        PW = match.group(1)
-    else:
-        print("CANNOT FIND PASSWORD")
-        sys.exit(-1)
+app = Flask(__name__)
+ROOT_DIR = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
+NETEYE_URL = """"https://monitor.irideos.it:5665"""
 
 ####################################################################################################
 # Decorators
@@ -40,7 +31,6 @@ def lock(path):
             lock_path = path.format(**args)
             with open(lock_path, "a") as f:
                 fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-                result = function(*args)
                 fcntl.flock(f.fileno(), fcntl.LOCK_UN) 
                 return result
         return wrapped
@@ -159,7 +149,7 @@ def process_check_result_request(args):
             "service": "{host}!{service}".format(**args),
             "exit_status":args["exit_status"],
             "plugin_output":args["plugin_output"],
-            "check_source":os.uname()[1],
+            "check_source":args["check_source"],
         }
 
     r = requests.post(
@@ -178,16 +168,6 @@ def process_check_result_request(args):
 
     return r.status_code, data, r.text
 
-def proxy_request(args):
-    args["epoch"] = clock()
-    r = requests.post(
-        PROXY_URL,
-        json=args, verify=False,
-        headers={
-            "Accept": "application/json"
-        }
-    )
-    return r.status_code, r.text
 
 ####################################################################################################
 # Functions
@@ -198,81 +178,132 @@ def create_host(args):
     status_code, data, text = create_host_request(args)
 
     if status_code == 200:
-        return data
+        return 200, text
 
-    sys.exit(2)
+    return 500, text
 
 
 @lock("/var/lock/process_check_result_{serviceb64}_{hostb64}.lock")
 @retry()
 def create_service(args):
     if check_service(args):
-        return "SERVICE EXISTS"
+        return 200, "SERVICE EXISTS"
     status_code, data, text = create_service_request(args)
 
     if status_code == 200:
         return data
-    
-    create_host(args)
+
+    if "already exists" in text:
+        return data
+
+    status_code, data, text = create_host(args)
+    if status_code != 200:
+        return status_code, text
 
 @retry()
 def process_check_result(args):
-    # Try to do the process_check_result
     status_code, data, text = process_check_result_request(args)
     if status_code == 200 and data["results"] != []:
-        return data
-    # if It fails delegate it to the proxy so that it can create the service
-    # and/or host
-    status_code, text = proxy_request(args)
-    if status_code == 200:
-        return text
+        return status_code, data
 
-    # if the proxy fails or it's not available, create service and host
-    # This is the last resort because neteye has bugs that might lose the data
-    # we send
     if not check_service(args):
         create_service(args)
         sleep(0.2)
         
 
 ####################################################################################################
-# Arguments parsing
+# Ordered Synchronized queue executor
 ####################################################################################################
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Execute Icinga2's process check result and, if needed, create hostname and/or service"
-    )
-    parser.add_argument("host", type=str, help="")
-    parser.add_argument("host_template", type=str, help="")
-    parser.add_argument("service", type=str, help="")
-    parser.add_argument("service_template", type=str, help="")
-    parser.add_argument("plugin_output", type=str, help="")
-    parser.add_argument("exit_status", type=int, help="")
-    parser.add_argument("log-file", type=str, help="")
 
-    args = vars(parser.parse_args())
-    args["auth"] = (USER, PW)
+class RequestsExecutor(Thread):
 
-    log_level = logging.INFO
-
-    logger = logging.getLogger()
-    logger.setLevel(log_level)
-    logging.addLevelName(logging.WARNING, 'WARN')
+    def __init__(self, queue, responses_results):
+        super(RequestsExecutor, self).__init__()
+        self.queue = queue
+        self.responses_results = responses_results
+        self.tasks = []
     
-    formatter = logging.Formatter("{uuid} %(levelname)s %(asctime)-15s %(message)s".format(uuid=uuid.uuid4()))
+    def _recv_tasks(self):
+        while not self.queue.empty() or self.tasks == []:
+            self.tasks.append(self.queue.get())
+            if len(self.tasks) < 5:
+                sleep(0.3)
+        self.tasks.sort()
 
-    shandler = logging.StreamHandler(sys.stdout)
-    shandler.setLevel(log_level)
-    shandler.setFormatter(formatter)
-    logger.addHandler(shandler)
 
-    fhandler = logging.FileHandler(args["log-file"])
-    fhandler.setLevel(log_level)
-    fhandler.setFormatter(formatter)
-    logger.addHandler(fhandler)
+    def run(self):
+        try:
+            while True:
+                self._recv_tasks()
 
-    # Disable --insecure warnings---------------------------//////////////////////////////////////////////////////mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+                epoch, task = self.tasks.pop(0)
+                _id = task.pop("id")
 
-    logging.info("START")
-    data = process_check_result(args)
-    logging.info("STOP")
+                status_code, text = process_check_result(task)
+
+                self.responses_results[_id] = {
+                    "status_code":status_code,
+                    "content":text
+                }
+        except KeyboardInterrupt:
+            print("Stopped by user")
+
+
+class ExecutorsCreator(Thread):
+    def __init__(self, task_queue, responses_results):
+        super(ExecutorsCreator, self).__init__()
+        self.task_queue = task_queue
+        self.responses_results = responses_results
+
+    def _setup_queue(self, lock, tasks):
+        if lock not in tasks:
+            _queue = Queue()
+            tasks[lock] = _queue
+            RequestsExecutor(_queue, self.responses_results).start()
+
+    def run(self):
+        tasks = {}
+        try:
+            while True:
+                epoch, task = self.task_queue.get()
+                lock = (task["service"], task["host"])
+                self._setup_queue(lock, tasks)
+                tasks[lock].put((epoch, task))
+        except KeyboardInterrupt:
+            print("Stopped by user")
+        
+
+def schedule_process_check_result(params, task_queue, responses_results):
+    _id = uuid4().hex
+    params["id"] = _id
+
+    task_queue.put((params.pop("epoch"), params))
+
+    while _id not in responses_results:
+        sleep(0.1)
+
+    response = responses_results.pop(_id)
+    return response["content"], response["status_code"]
+    
+####################################################################################################
+# Routes
+####################################################################################################
+
+def process_check_result_endpoint_builder(task_queue, responses_results):
+    @app.route('/', methods=["POST"])
+    def process_check_result_endpoint():
+        return schedule_process_check_result(request.json, task_queue, responses_results)
+
+####################################################################################################
+# Start
+####################################################################################################
+
+if __name__ == "__main__":
+    requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
+    manager = Manager()
+    responses_results = manager.dict()
+    task_queue = Queue()
+    requests_executor = ExecutorsCreator(task_queue, responses_results)
+    requests_executor.start()
+    process_check_result_endpoint_builder(task_queue, responses_results)
+    app.run(host = '0.0.0.0', port = 9966, threaded=False, processes=10)

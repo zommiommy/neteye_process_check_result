@@ -1,0 +1,14 @@
+[package]
+name = "proxy_rust"
+version = "0.1.0"
+authors = ["zom <tommaso.fontana.96@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rocket = "0.4.4"
+base64 = "0.12.1"
+reqwest = { version = "0.10.4", features = ["blocking", "json"] }
+priority-queue = "1.0.0"
+uuid = "0.8"
