@@ -5,6 +5,7 @@ import sys
 import uuid
 import fcntl
 import urllib
+import socket
 import logging
 import requests
 import argparse
@@ -23,7 +24,9 @@ except ImportError:
 # Constants
 ####################################################################################################
 NETEYE_URL = """https://monitor.irideos.it:5665""" # MUST be https
-PROXY_URL  = """http://127.0.0.1:9966""" # MUST be http
+PROXY_IP = "127.0.0.1"
+PROXY_PORT = 9966
+PROXY_URL  = """http://{PROXY_IP}:{PROXY_PORT}""".format(**locals()) # MUST be http
 USER="director"
 
 PW_FILE="/neteye/shared/tornado/data/director-user.conf"
@@ -38,6 +41,15 @@ with open(PW_FILE) as f:
 # Decorators
 ####################################################################################################
 
+def proxy_is_up():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+        s.connect((PROXY_IP, PROXY_PORT))
+        s.close()
+        return True
+    except:
+        return False
+
 def lock(path):
     """I have already checked, the unlock works even if the subfunction exits with sys.exit"""
     def lock_internal(function):
@@ -47,7 +59,7 @@ def lock(path):
             lock_path = path.format(**args)
             with open(lock_path, "a") as f:
                 fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-                result = function(*args)
+                result = function(args)
                 fcntl.flock(f.fileno(), fcntl.LOCK_UN) 
                 return result
         return wrapped
@@ -191,7 +203,7 @@ def proxy_request(args):
         PROXY_URL,
         json=args, verify=False,
         headers={
-            "Accept": "application/json"
+            "Accept": "application/json
         }
     )
     return r.status_code, r.text
@@ -244,20 +256,20 @@ def process_check_result(args):
     logger.info("process_check_results KO")
     # if It fails delegate it to the proxy so that it can create the service
     # and/or host
-    logging.info("Dispatching the request to the proxy")
-    status_code, text = proxy_request(args)
-    if status_code == 200:
-        logger.info("process_check_results OK")
-        return text
+    if proxy_is_up():
+        logging.info("Dispatching the request to the proxy")
+        status_code, text = proxy_request(args)
+        if status_code == 200:
+            logger.info("process_check_results OK")
+            return text
 
     logger.info("process_check_results KO")
 
     # if the proxy fails or it's not available, create service and host
     # This is the last resort because neteye has bugs that might lose the data
     # we send
-    if not check_service(args):
-        create_service(args)
-        sleep(0.2)
+    create_service(args)
+    sleep(0.2)
         
 
 ####################################################################################################
