@@ -8,8 +8,16 @@ import urllib
 import logging
 import requests
 import argparse
-from time import sleep, clock
+from time import sleep
 from base64 import urlsafe_b64encode
+
+try:
+    from time import clock
+    timestamp_funciton = clock
+except ImportError:
+    from time import perf_counter_ns
+    timestamp_funciton = perf_counter_ns
+    
 
 ####################################################################################################
 # Constants
@@ -26,7 +34,6 @@ with open(PW_FILE) as f:
     else:
         print("CANNOT FIND PASSWORD")
         sys.exit(-1)
-
 ####################################################################################################
 # Decorators
 ####################################################################################################
@@ -159,7 +166,7 @@ def process_check_result_request(args):
             "service": "{host}!{service}".format(**args),
             "exit_status":args["exit_status"],
             "plugin_output":args["plugin_output"],
-            "check_source":os.uname()[1],
+            "check_source":args["check_source"],
         }
 
     r = requests.post(
@@ -179,7 +186,7 @@ def process_check_result_request(args):
     return r.status_code, data, r.text
 
 def proxy_request(args):
-    args["epoch"] = clock()
+    args["epoch"] = timestamp_funciton()
     r = requests.post(
         PROXY_URL,
         json=args, verify=False,
@@ -195,37 +202,55 @@ def proxy_request(args):
 
 @retry()
 def create_host(args):
+    logger.info("[CH] Creating host")
     status_code, data, text = create_host_request(args)
 
     if status_code == 200:
+        logger.info("[CH] OK")
         return data
 
+    logger.info("[CH] KO")
     sys.exit(2)
 
 
 @lock("/var/lock/process_check_result_{serviceb64}_{hostb64}.lock")
 @retry()
 def create_service(args):
+    logger.info("[CS] Creating the service")
     if check_service(args):
         return "SERVICE EXISTS"
     status_code, data, text = create_service_request(args)
 
     if status_code == 200:
+        logger.info("[CS] OK")
+        return data
+    
+    if "already exists" in text:
+        logger.info("[CS] Service already exists")
         return data
     
     create_host(args)
 
+
 @retry()
 def process_check_result(args):
+    logger.info("Doing process_check_results")
     # Try to do the process_check_result
     status_code, data, text = process_check_result_request(args)
     if status_code == 200 and data["results"] != []:
+        logger.info("process_check_results OK")
         return data
+        
+    logger.info("process_check_results KO")
     # if It fails delegate it to the proxy so that it can create the service
     # and/or host
+    logging.info("Dispatching the request to the proxy")
     status_code, text = proxy_request(args)
     if status_code == 200:
+        logger.info("process_check_results OK")
         return text
+
+    logger.info("process_check_results KO")
 
     # if the proxy fails or it's not available, create service and host
     # This is the last resort because neteye has bugs that might lose the data
@@ -239,6 +264,7 @@ def process_check_result(args):
 # Arguments parsing
 ####################################################################################################
 if __name__ == "__main__":
+    requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
     parser = argparse.ArgumentParser(
         description="Execute Icinga2's process check result and, if needed, create hostname and/or service"
     )
@@ -248,11 +274,12 @@ if __name__ == "__main__":
     parser.add_argument("service_template", type=str, help="")
     parser.add_argument("plugin_output", type=str, help="")
     parser.add_argument("exit_status", type=int, help="")
-    parser.add_argument("log-file", type=str, help="")
+    parser.add_argument("log_file", type=str, help="")
 
     args = vars(parser.parse_args())
     args["auth"] = (USER, PW)
-
+    args["check_source"] = os.uname()[1]
+    print(args)
     log_level = logging.INFO
 
     logger = logging.getLogger()
@@ -266,7 +293,7 @@ if __name__ == "__main__":
     shandler.setFormatter(formatter)
     logger.addHandler(shandler)
 
-    fhandler = logging.FileHandler(args["log-file"])
+    fhandler = logging.FileHandler(os.path.join("/neteye/shared/tornado/data/archive/", args["log_file"]))
     fhandler.setLevel(log_level)
     fhandler.setFormatter(formatter)
     logger.addHandler(fhandler)

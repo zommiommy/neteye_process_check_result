@@ -1,40 +1,47 @@
+import argparse
+import fcntl
+import json
+import logging
 import os
 import re
 import sys
-import json
 import time
-from time import sleep, clock
+import urllib
+import uuid
+from base64 import urlsafe_b64encode
+from multiprocessing import Manager, Queue, cpu_count
+from pprint import pprint
+from threading import Thread
+from time import sleep
+from uuid import uuid4
+
 import requests
 from flask import Flask, request
-from pprint import pprint
-from multiprocessing import Manager, Queue, cpu_count
-from threading import Thread
-from uuid import uuid4
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# add formatter to ch
+ch.setFormatter(formatter)
+
+# add ch to logger
+logger.addHandler(ch)
 
 ####################################################################################################
 # Globals
 ####################################################################################################
 app = Flask(__name__)
 ROOT_DIR = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
-NETEYE_URL = """"https://monitor.irideos.it:5665"""
+NETEYE_URL = """https://monitor.irideos.it:5665"""
 
 ####################################################################################################
 # Decorators
 ####################################################################################################
-
-def lock(path):
-    """I have already checked, the unlock works even if the subfunction exits with sys.exit"""
-    def lock_internal(function):
-        def wrapped(args):
-            args["hostb64"] = urlsafe_b64encode(args["host"].encode())
-            args["serviceb64"] = urlsafe_b64encode(args["service"].encode())
-            lock_path = path.format(**args)
-            with open(lock_path, "a") as f:
-                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-                fcntl.flock(f.fileno(), fcntl.LOCK_UN) 
-                return result
-        return wrapped
-    return lock_internal
 
 def retry(max_times=30, sleep_time=3):
     def retry_decorator(function):
@@ -45,9 +52,9 @@ def retry(max_times=30, sleep_time=3):
                     if result is not None:
                         return result
                 except requests.exceptions.Timeout:
-                    logging.warning("The function %s went in timeout", function.__name__)
+                    logger.warning("The function %s went in timeout", function.__name__)
                 sleep(sleep_time)
-            logging.warning(" [EXIT] %s reached max number of tries from the arguments %s", function.__name__, args)
+            logger.warning(" [EXIT] %s reached max number of tries from the arguments %s", function.__name__, args)
             sys.exit(2)
         return wrapped
     return retry_decorator
@@ -57,6 +64,7 @@ def retry(max_times=30, sleep_time=3):
 ####################################################################################################
 
 def check_service(args):
+    logger.info("%s [CS] Check if the service exists"%args["id"])
     url = "{neteye_url}/v1/objects/services/{host}!{service}".format(
         neteye_url=NETEYE_URL,
         host=args["host"].replace("/", "%2F"),
@@ -77,10 +85,10 @@ def check_service(args):
     )
 
     if r.status_code == 200:
-        logging.info("[CS] OK")
+        logger.info("%s [CS] OK"%args["id"])
         return True
 
-    logging.warning("[CS] Error : %s", r.text.replace("\n", ""))
+    logger.warning("%s [CS] Error : %s"%(r.text.replace("\n", ""), args["id"]))
     return False
 
 def create_host_request(args):
@@ -151,7 +159,7 @@ def process_check_result_request(args):
             "plugin_output":args["plugin_output"],
             "check_source":args["check_source"],
         }
-
+        
     r = requests.post(
         url,
         json=data,
@@ -175,36 +183,40 @@ def process_check_result_request(args):
 
 @retry()
 def create_host(args):
+    logger.info("%s [CH] Creating host"%args["id"])
     status_code, data, text = create_host_request(args)
 
     if status_code == 200:
+        logger.info("%s [CH] OK"%args["id"])
         return 200, text
 
+    logger.info("%s [CH] KO"%args["id"])
     return 500, text
 
-
-@lock("/var/lock/process_check_result_{serviceb64}_{hostb64}.lock")
 @retry()
 def create_service(args):
-    if check_service(args):
-        return 200, "SERVICE EXISTS"
+    logger.info("%s [CS] Creating the service"%args["id"])
     status_code, data, text = create_service_request(args)
 
     if status_code == 200:
+        logger.info("%s [CS] OK"%args["id"])
         return data
 
     if "already exists" in text:
+        logger.info("%s [CS] Service already exists"%args["id"])
         return data
 
-    status_code, data, text = create_host(args)
-    if status_code != 200:
-        return status_code, text
+    create_host(args)
 
 @retry()
 def process_check_result(args):
+    logger.info("%s Doing process_check_results"%args["id"])
     status_code, data, text = process_check_result_request(args)
     if status_code == 200 and data["results"] != []:
+        logger.info("%s process_check_results OK"%args["id"])
         return status_code, data
+
+    logger.info("%s process_check_results KO"%args["id"])
 
     if not check_service(args):
         create_service(args)
@@ -237,8 +249,8 @@ class RequestsExecutor(Thread):
                 self._recv_tasks()
 
                 epoch, task = self.tasks.pop(0)
-                _id = task.pop("id")
-
+                _id = task["id"]
+                print("Executing task %s"%task)
                 status_code, text = process_check_result(task)
 
                 self.responses_results[_id] = {
@@ -292,7 +304,10 @@ def schedule_process_check_result(params, task_queue, responses_results):
 def process_check_result_endpoint_builder(task_queue, responses_results):
     @app.route('/', methods=["POST"])
     def process_check_result_endpoint():
-        return schedule_process_check_result(request.json, task_queue, responses_results)
+        args = request.json
+        args["auth"] = tuple(args["auth"])
+        print("Got request from %s"%args)
+        return schedule_process_check_result(args, task_queue, responses_results)
 
 ####################################################################################################
 # Start
