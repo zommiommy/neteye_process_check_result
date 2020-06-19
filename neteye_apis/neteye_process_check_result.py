@@ -13,27 +13,18 @@ from .utils import logger, setup_logger
 @retry()
 def normal_execution(args):
     logger.info("Doing process_check_results")
-    # Try to do the process_check_result
-    result = process_check_result(args)
-    if result is not None:
-        logger.info("process_check_results OK")
-        return result
-    logger.info("process_check_results KO")
-
     # if It fails delegate it to the proxy so that it can create the service
     # and/or host
-    if is_proxy_up(args["proxy_ip"], args["proxy_port"]):
-        logger.info("Dispatching the request to the proxy")
-        status_code, text = proxy_request(args)
-        if status_code == 200:
-            logger.info("process_check_results OK")
-            return text
+    logger.info("Dispatching the request to the proxy")
+    status_code, text = proxy_request(args)
+    if status_code == 200:
+        logger.info("process_check_results OK")
+        return text
 
     logger.info("process_check_results KO")
     sleep(0.2)
 
 def execute(args):
-
     logger.info("START")
     data = normal_execution(args)
     if data is None:
