@@ -25,7 +25,7 @@ class RequestsExecutor(Thread):
             while True:
                 self._recv_tasks()
 
-                epoch, task = self.tasks.pop(0)
+                priority_id, task = self.tasks.pop(0)
                 _id = task["id"]
                 print("Executing task %s"%task)
                 status_code, text = process_check_result(task, recovery=True)
