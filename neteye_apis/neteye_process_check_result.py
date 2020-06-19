@@ -49,18 +49,20 @@ def run_client():
     parser.add_argument("service_template", type=str, help="")
     parser.add_argument("plugin_output", type=str, help="")
     parser.add_argument("exit_status", type=int, help="")
-    parser.add_argument("log_file", type=str, help="")
-    parser.add_argument("eventid", type=int, help="")
+    parser.add_argument("log_file", type=str, help="The name of the log that will be created")
+    parser.add_argument("eventid", type=int, help="A progressive identifier that's used to order the requests")
 
     args = vars(parser.parse_args())
-    args_to_print = args.copy()
-
-    args.update(get_settings())
+    client_id = uuid4()
+    args["client_id"] = client_id    
     args["check_source"] = os.uname()[1]
+
+    args_to_print = args.copy()
+    args.update(get_settings())
 
     disable_warnings()
 
-    setup_logger(args["log_path"], args["log_file"], uuid4(), logging.INFO)
+    setup_logger(args["log_path"], args["log_file"], client_id, logging.INFO)
 
     logger.info("Running with arguments %s"%args_to_print)
 
