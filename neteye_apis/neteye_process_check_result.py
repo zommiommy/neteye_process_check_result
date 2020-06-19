@@ -54,7 +54,7 @@ def run_client():
 
     args = vars(parser.parse_args())
     client_id = uuid4()
-    args["client_id"] = client_id    
+    args["client_id"] = str(client_id)    
     args["check_source"] = os.uname()[1]
 
     args_to_print = args.copy()
