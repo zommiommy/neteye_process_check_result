@@ -53,13 +53,15 @@ def run_client():
     parser.add_argument("eventid", type=int, help="")
 
     args = vars(parser.parse_args())
+    args_to_print = args.copy()
 
     args.update(get_settings())
     args["check_source"] = os.uname()[1]
-    print(args)
 
     disable_warnings()
 
     setup_logger(args["log_path"], args["log_file"], uuid4(), logging.INFO)
+
+    logger.info("Running with arguments %s"%args_to_print)
 
     execute(args)
