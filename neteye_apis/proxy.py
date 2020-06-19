@@ -24,6 +24,7 @@ def process_check_result_endpoint_builder(task_queue, responses_results):
 ####################################################################################################
 
 def run_proxy(port=9966):
+    disable_warnings()
     settings = get_settings(get_auth=False)
     setup_logger(settings["log_path"], "process_check_result_proxy.log", uuid4())
     # Create the syncrhonized data structures
