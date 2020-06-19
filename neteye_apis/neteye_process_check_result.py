@@ -49,7 +49,7 @@ def run_client():
     parser.add_argument("plugin_output", type=str, help="")
     parser.add_argument("exit_status", type=int, help="")
     parser.add_argument("log_file", type=str, help="")
-    parser.add_argument("eventid", type=str, help="")
+    parser.add_argument("eventid", type=int, help="")
 
     args = vars(parser.parse_args())
 

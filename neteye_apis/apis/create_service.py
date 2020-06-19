@@ -3,6 +3,7 @@ from ..rest_requests import *
 from ..utils import lock, retry, logger
 
 from .create_host import create_host
+from .check_service import check_service
 
 @lock("/var/lock/process_check_result_{serviceb64}_{hostb64}.lock")
 @retry()
