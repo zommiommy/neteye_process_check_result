@@ -10,7 +10,8 @@ except ImportError:
 def proxy_request(args):
     args["epoch"] = timestamp_funciton()
     args["priority_id"] = args["eventid"]
-
+    args["auth"] = (args["user"], args["pw"])
+    
     r = requests.post(
         args["proxy_url"],
         json=args, verify=False,
