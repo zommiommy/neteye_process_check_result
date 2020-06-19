@@ -28,10 +28,10 @@ class RequestsExecutor(Thread):
                 priority_id, task = self.tasks.pop(0)
                 _id = task["id"]
                 print("Executing task %s"%task)
-                status_code, text = process_check_result(task, recovery=True)
+                text = process_check_result(task, recovery=True)
 
                 self.responses_results[_id] = {
-                    "status_code":status_code,
+                    "status_code": 200 if text is not None else 500,
                     "content":text
                 }
         except KeyboardInterrupt:
