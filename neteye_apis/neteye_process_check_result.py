@@ -4,6 +4,7 @@ import sys
 import logging
 import argparse
 from time import sleep
+from uuid import uuid4
 
 from .apis import process_check_result
 from .utils import retry, is_proxy_up, proxy_request, disable_warnings
@@ -59,6 +60,6 @@ def run_client():
 
     disable_warnings()
 
-    setup_logger(args["log_path"], args["log_file"], logging.INFO)
+    setup_logger(args["log_path"], args["log_file"], uuid4(), logging.INFO)
 
     execute(args)

@@ -2,16 +2,14 @@ import os
 import sys
 import logging
 
-from uuid import uuid4
-
 logger = logging.getLogger(__name__)
 logging.addLevelName(logging.WARNING, 'WARN')
 
-def setup_logger(log_path, log_file, log_level=logging.INFO):
+def setup_logger(log_path, log_file, _id, log_level=logging.INFO):
     global logger
     logger.setLevel(log_level)
     
-    formatter = logging.Formatter("{uuid} %(levelname)s %(asctime)-15s %(message)s".format(uuid=uuid4()))
+    formatter = logging.Formatter("{uuid} %(levelname)s %(asctime)-15s %(message)s".format(uuid=_id))
 
     shandler = logging.StreamHandler(sys.stdout)
     shandler.setLevel(log_level)

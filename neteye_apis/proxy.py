@@ -1,6 +1,7 @@
 from multiprocessing import Manager, Queue, cpu_count
 import os
 from flask import Flask, request
+from uuid import uuid4
 
 from .utils import logger, disable_warnings, setup_logger
 from .settings import get_settings
@@ -24,7 +25,7 @@ def process_check_result_endpoint_builder(task_queue, responses_results):
 
 def run_proxy(port=9966):
     settings = get_settings(get_auth=False)
-    setup_logger(settings["log_path"], "process_check_result_proxy.log")
+    setup_logger(settings["log_path"], "process_check_result_proxy.log", uuid4())
     # Create the syncrhonized data structures
     manager = Manager()
     responses_results = manager.dict()
