@@ -76,8 +76,9 @@ def retry(max_times=30, sleep_time=3):
                 except requests.exceptions.Timeout:
                     logging.warning("The function %s went in timeout", function.__name__)
                 sleep(sleep_time)
-            logging.warning(" [EXIT] %s reached max number of tries from the arguments %s", function.__name__, args)
-            sys.exit(2)
+            text = " [EXIT] %s reached max number of tries from the arguments %s", function.__name__, args
+            logging.warning(text)
+            return None
         return wrapped
     return retry_decorator
 
@@ -203,13 +204,13 @@ def proxy_request(args):
         PROXY_URL,
         json=args, verify=False,
         headers={
-            "Accept": "application/json
+            "Accept": "application/json"
         }
     )
     return r.status_code, r.text
 
 ####################################################################################################
-# Functions
+# Recovery mode
 ####################################################################################################
 
 @retry()
@@ -243,6 +244,26 @@ def create_service(args):
     
     create_host(args)
 
+@retry()
+def recovery_mode(args):
+    logger.info("Doing process_check_results")
+    # Try to do the process_check_result
+    status_code, data, text = process_check_result_request(args)
+    if status_code == 200 and data["results"] != []:
+        logger.info("process_check_results OK")
+        return data
+
+    logger.info("process_check_results KO")
+
+    # if the proxy fails or it's not available, create service and host
+    # This is the last resort because neteye has bugs that might lose the data
+    # we send
+    create_service(args)
+    sleep(0.2)
+
+####################################################################################################
+# Standard mode
+####################################################################################################
 
 @retry()
 def process_check_result(args):
@@ -264,13 +285,8 @@ def process_check_result(args):
             return text
 
     logger.info("process_check_results KO")
-
-    # if the proxy fails or it's not available, create service and host
-    # This is the last resort because neteye has bugs that might lose the data
-    # we send
-    create_service(args)
     sleep(0.2)
-        
+
 
 ####################################################################################################
 # Arguments parsing
@@ -310,8 +326,8 @@ if __name__ == "__main__":
     fhandler.setFormatter(formatter)
     logger.addHandler(fhandler)
 
-    # Disable --insecure warnings---------------------------//////////////////////////////////////////////////////mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
-
     logging.info("START")
     data = process_check_result(args)
+    if data is None:
+        data = recovery_mode(args)
     logging.info("STOP")
