@@ -1,6 +1,7 @@
 #!/bin/python
 import os
 import sys
+import json
 import logging
 import argparse
 from time import sleep
@@ -19,10 +20,10 @@ def normal_execution(args):
     logger.info("Dispatching the request to the proxy")
     status_code, text = proxy_request(args)
     if status_code == 200:
-        logger.info("process_check_results OK")
+        logger.info("OK")
         return text
 
-    logger.info("process_check_results KO")
+    logger.info("KO %s"%text)
     sleep(0.2)
 
 def execute(args):
@@ -67,7 +68,11 @@ def run_client():
     logger.info("START")
     result = execute(args)
     logger.info("STOP")
+
     if result is None:
         logger.warn("The packet could not be sent. The arguments were: %s"%args)
         with open("lost_packets.log", "a") as f:
-            json.dump(args, f)
+            f.write(
+                json.dumps(args)
+                + "\n"
+            )

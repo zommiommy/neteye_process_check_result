@@ -29,11 +29,19 @@ class RequestsExecutor(Thread):
                 _id = task["id"]
                 logger.info("Executing task of the client %s"%task["client_id"])
                 logger.debug("Executing task %s"%task)
-                text = process_check_result(task, recovery=True)
+                
+                try:
+                    text = process_check_result(task, recovery=True)
+                    data = {
+                        "status_code": 200 if text is not None else 500,
+                        "content":text if text is not None else "Error"
+                    }
+                except Exception as e:
+                    data = {
+                        "status_code": 500,
+                        "content":"The proxy had the following error when trying to do the process_check_result [%s]"%str(e)
+                    }
 
-                self.responses_results[_id] = {
-                    "status_code": 200 if text is not None else 500,
-                    "content":text if text is not None else "Error"
-                }
+                self.responses_results[_id] = data
         except KeyboardInterrupt:
             print("Stopped by user")
