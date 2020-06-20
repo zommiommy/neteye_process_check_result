@@ -32,6 +32,9 @@ def run_proxy_instance(settings, port=9966):
 
     requests_executor = ExecutorsCreator(task_queue, responses_results)
     requests_executor.start()
+
+    # Recover the lost packets
+
     # Start the http server
     app = Flask(__name__)
     app.route('/', methods=["POST"])(
