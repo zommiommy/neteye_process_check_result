@@ -12,6 +12,8 @@ class LostPacketsRecoverer(Thread):
         self.settings = settings
         self.task_queue = task_queue
         self.responses_results = responses_results
+        # Create the file if it doesn't exists yet
+        open(settings["lost_packets_path"], "a").close()
 
     def run(self):
         try:
