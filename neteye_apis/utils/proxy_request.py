@@ -9,12 +9,24 @@ except ImportError:
 
 def proxy_request(args):
     args["epoch"] = timestamp_funciton()
-    args["priority_id"] = args["eventid"]
-    args["auth"] = (args["user"], args["pw"])
-    
+
+    data = {
+        key: args[key]
+        for key in [
+            "host",
+            "host_template",
+            "service",
+            "service_template",
+            "plugin_output",
+            "exit_status",
+            "eventid",
+            "client_id"
+        ]
+    }
+
     r = requests.post(
         args["proxy_url"],
-        json=args, verify=False,
+        json=data, verify=False,
         headers={
             "Accept": "application/json"
         }

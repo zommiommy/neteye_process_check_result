@@ -28,7 +28,6 @@ class RequestsExecutor(Thread):
                 priority_id, task = self.tasks.pop(0)
                 _id = task["id"]
                 logger.info("Executing task of the client %s"%task["client_id"])
-                logger.debug("Executing task %s"%task)
                 
                 try:
                     text = process_check_result(task, recovery=True)

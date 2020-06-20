@@ -6,7 +6,7 @@ def schedule_process_check_result(params, task_queue, responses_results):
     _id = uuid4().hex
     params["id"] = _id
 
-    task_queue.put((params["priority_id"], params))
+    task_queue.put((params["eventid"], params))
 
     while _id not in responses_results:
         sleep(0.1)

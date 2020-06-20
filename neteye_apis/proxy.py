@@ -16,11 +16,11 @@ from .proxy_utils import (
 # Routes
 ####################################################################################################
 
-def process_check_result_endpoint_builder(task_queue, responses_results):
+def process_check_result_endpoint_builder(settings, task_queue, responses_results):
     def process_check_result_endpoint():
         args = request.json
-        args["auth"] = tuple(args["auth"])
         print("Got request from %s"%args)
+        args["auth"] = (settings["user"], settings["pw"])
         return schedule_process_check_result(args, task_queue, responses_results)
     return process_check_result_endpoint
 
@@ -45,13 +45,13 @@ def run_proxy_instance(settings, port=9966):
     # Start the http server
     app = Flask(__name__)
     app.route('/', methods=["POST"])(
-        process_check_result_endpoint_builder(task_queue, responses_results)
+        process_check_result_endpoint_builder(settings, task_queue, responses_results)
     )
     app.run(host = '0.0.0.0', port=settings["proxy_port"])
 
 def run_proxy(port=9966):
     disable_warnings()
-    settings = get_settings(get_auth=False)
+    settings = get_settings()
     setup_logger(settings["log_path"], "process_check_result_proxy.log", uuid4())
     try:
         while settings["fork_proxy"]:
