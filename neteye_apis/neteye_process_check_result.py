@@ -11,7 +11,7 @@ from uuid import uuid4
 from .apis import process_check_result
 from .utils import retry, is_proxy_up, proxy_request, disable_warnings
 from .settings import get_settings
-from .utils import logger, setup_logger
+from .utils import logger, setup_logger, filter_args
 
 @retry()
 def normal_execution(args):
@@ -82,19 +82,20 @@ def run_client():
         return
     
     logger.warn("Entering Recovery")
+    args["auth"] = (args["user"], args["pw"])
     scode, result, _ = recovery_execution(args)
     logger.warn("Exiting Recovery")
         
     if result == 200:
         return
     
-    logger.error("The packet could not be sent. The arguments were: %s"%args)
+    logger.error("The packet could not be sent. The arguments were: %s"%filter_args(args))
     with open(args["lost_packets_path"], "a") as f:
         # Acquire the lock
         fcntl.flock(f.fileno(), fcntl.LOCK_EX)
         # Add the row to the file
         f.write(
-            json.dumps(args)
+            json.dumps(filter_args(args))
             + "\n"
         )
         # Release the lock

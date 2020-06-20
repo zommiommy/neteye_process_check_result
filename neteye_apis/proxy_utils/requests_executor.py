@@ -6,9 +6,10 @@ from ..utils import logger
 
 class RequestsExecutor(Thread):
 
-    def __init__(self, queue, responses_results):
+    def __init__(self, settings, queue, responses_results):
         super(RequestsExecutor, self).__init__()
         self.queue = queue
+        self.settings = settings
         self.responses_results = responses_results
         self.tasks = []
     
@@ -28,7 +29,7 @@ class RequestsExecutor(Thread):
                 priority_id, task = self.tasks.pop(0)
                 _id = task["id"]
                 logger.info("Executing task of the client %s"%task["client_id"])
-                
+                task.update(self.settings)
                 try:
                     text = process_check_result(task, recovery=True)
                     data = {

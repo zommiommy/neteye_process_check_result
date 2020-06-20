@@ -34,7 +34,7 @@ def run_proxy_instance(settings, port=9966):
     responses_results = manager.dict()
     task_queue = Queue()
 
-    requests_executor = ExecutorsCreator(task_queue, responses_results)
+    requests_executor = ExecutorsCreator(settings, task_queue, responses_results)
     requests_executor.start()
 
     lost_packets_recoverer = LostPacketsRecoverer(settings, task_queue, responses_results)

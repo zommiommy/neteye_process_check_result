@@ -5,8 +5,9 @@ from .requests_executor import RequestsExecutor
 
 
 class ExecutorsCreator(Thread):
-    def __init__(self, task_queue, responses_results):
+    def __init__(self, settings, task_queue, responses_results):
         super(ExecutorsCreator, self).__init__()
+        self.settings = settings
         self.task_queue = task_queue
         self.responses_results = responses_results
 
@@ -14,7 +15,7 @@ class ExecutorsCreator(Thread):
         if lock not in tasks:
             _queue = Queue()
             tasks[lock] = _queue
-            RequestsExecutor(_queue, self.responses_results).start()
+            RequestsExecutor(self.settings, _queue, self.responses_results).start()
 
     def run(self):
         tasks = {}

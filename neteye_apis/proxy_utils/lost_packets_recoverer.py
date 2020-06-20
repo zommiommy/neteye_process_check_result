@@ -1,6 +1,9 @@
+import json
 import fcntl
 from threading import Thread
+from time import sleep
 
+from ..utils import logger
 from .schedule_process_check_result import schedule_process_check_result
 
 class LostPacketsRecoverer(Thread):
@@ -25,15 +28,18 @@ class LostPacketsRecoverer(Thread):
                     # Release the lock
                     fcntl.flock(f.fileno(), fcntl.LOCK_UN) 
                 
-                logger.info("Found %d lost packers"%len(messages.split("\n")))
+                logger.info("Found %d lost packers"%max(len(messages.split("\n")) - 1, 0))
 
                 for line in messages.split("\n"):
+                    if line == "":
+                        continue
                     try:
                         args = json.loads(line)
+                        logger.info("Adding lost packet %s"%args)
                         schedule_process_check_result(args, self.task_queue, self.responses_results)
                     except json.JSONDecodeError:
                         logger.warning("Found a packet which is not a valid Json: %s"%line)
-                        
+
                 sleep(self.settings["lost_packet_delay"])
         except KeyboardInterrupt:
             print("Stopped by user")

@@ -1,4 +1,5 @@
 import requests
+from .filter_args import filter_args
 
 try:
     from time import clock
@@ -10,23 +11,9 @@ except ImportError:
 def proxy_request(args):
     args["epoch"] = timestamp_funciton()
 
-    data = {
-        key: args[key]
-        for key in [
-            "host",
-            "host_template",
-            "service",
-            "service_template",
-            "plugin_output",
-            "exit_status",
-            "eventid",
-            "client_id"
-        ]
-    }
-
     r = requests.post(
         args["proxy_url"],
-        json=data, verify=False,
+        json=filter_args(args), verify=False,
         headers={
             "Accept": "application/json"
         }
