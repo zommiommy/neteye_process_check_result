@@ -6,4 +6,6 @@
     "pw_file":"/neteye/shared/tornado/data/director-user.conf",
     "pw_regex":"password *= *\"(.+)\"",
     "log_path":"/neteye/shared/tornado/data/archive/",
+    "proxy_fork_delay":0.5,
+    "fork_proxy":true
 }
