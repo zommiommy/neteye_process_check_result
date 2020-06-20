@@ -8,5 +8,6 @@
     "log_path":"/neteye/shared/tornado/data/archive/",
     "proxy_fork_delay":0.5,
     "fork_proxy":true,
+    "lost_packet_delay":60,
     "lost_packets_path":"/neteye/shared/tornado/data/archive/neteye_process_check_result_lost_packets.log"
 }

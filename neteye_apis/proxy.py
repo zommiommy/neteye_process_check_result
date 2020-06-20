@@ -6,7 +6,11 @@ from time import sleep
 
 from .utils import logger, disable_warnings, setup_logger
 from .settings import get_settings
-from .proxy_utils import schedule_process_check_result, ExecutorsCreator
+from .proxy_utils import (
+    schedule_process_check_result,
+    ExecutorsCreator,
+    LostPacketsRecoverer
+)
 
 ####################################################################################################
 # Routes
@@ -32,6 +36,9 @@ def run_proxy_instance(settings, port=9966):
 
     requests_executor = ExecutorsCreator(task_queue, responses_results)
     requests_executor.start()
+
+    lost_packets_recoverer = LostPacketsRecoverer(settings, task_queue, responses_results)
+    lost_packets_recoverer.start()
 
     # Recover the lost packets
 

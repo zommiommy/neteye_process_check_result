@@ -2,6 +2,7 @@
 import os
 import sys
 import json
+import fcntl
 import logging
 import argparse
 from time import sleep
@@ -89,7 +90,12 @@ def run_client():
     
     logger.error("The packet could not be sent. The arguments were: %s"%args)
     with open(args["lost_packets_path"], "a") as f:
+        # Acquire the lock
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        # Add the row to the file
         f.write(
             json.dumps(args)
             + "\n"
         )
+        # Release the lock
+        fcntl.flock(f.fileno(), fcntl.LOCK_UN) 
