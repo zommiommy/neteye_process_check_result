@@ -15,7 +15,6 @@ from .utils import logger, setup_logger, filter_args
 
 @retry()
 def normal_execution(args):
-    logger.info("Doing process_check_results")
     # if It fails delegate it to the proxy so that it can create the service
     # and/or host
     logger.info("Dispatching the request to the proxy")
