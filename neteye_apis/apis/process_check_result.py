@@ -9,10 +9,10 @@ def process_check_result(args, recovery=False):
     # Try to do the process_check_result
     status_code, data, text = process_check_result_request(args)
     if status_code == 200 and data["results"] != []:
-        logger.info("process_check_results OK")
+        logger.info("[PC] process_check_results OK")
         return data
 
-    logger.info("process_check_results KO")
+    logger.info("[PC] process_check_results KO")
 
     if recovery:
         # if the proxy fails or it's not available, create service and host
