@@ -12,7 +12,7 @@ def is_proxy_up():
 
     if result:
         print("yes")
+        sys.exit(0)
     else:
         print("no")
-
-    sys.exit(1 - int(result))
+        sys.exit(2)
