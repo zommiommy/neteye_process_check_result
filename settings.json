@@ -5,5 +5,5 @@
     "user":"director",
     "pw_file":"/neteye/shared/tornado/data/director-user.conf",
     "pw_regex":"password *= *\"(.+)\"",
-    "log_path":"/neteye/shared/tornado/data/archive/"
+    "log_path":"/neteye/shared/tornado/data/archive/",
 }

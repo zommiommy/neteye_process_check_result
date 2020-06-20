@@ -33,7 +33,7 @@ class RequestsExecutor(Thread):
 
                 self.responses_results[_id] = {
                     "status_code": 200 if text is not None else 500,
-                    "content":text
+                    "content":text if text is not None else "Error"
                 }
         except KeyboardInterrupt:
             print("Stopped by user")

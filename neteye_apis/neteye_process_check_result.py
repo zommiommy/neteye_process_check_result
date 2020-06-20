@@ -26,7 +26,6 @@ def normal_execution(args):
     sleep(0.2)
 
 def execute(args):
-    logger.info("START")
     data = normal_execution(args)
     if data is None:
         logger.warn("Entering Recovery")
@@ -34,7 +33,6 @@ def execute(args):
         if result is not None:
             logger.info("process_check_results OK")
             return result
-    logger.info("STOP")
 
 ####################################################################################################
 # Arguments parsing
@@ -66,4 +64,10 @@ def run_client():
 
     logger.info("Running with arguments %s"%args_to_print)
 
-    execute(args)
+    logger.info("START")
+    result = execute(args)
+    logger.info("STOP")
+    if result is None:
+        logger.warn("The packet could not be sent. The arguments were: %s"%args)
+        with open("lost_packets.log", "a") as f:
+            json.dump(args, f)
