@@ -21,19 +21,27 @@ def normal_execution(args):
     status_code, text = proxy_request(args)
     if status_code == 200:
         logger.info("OK")
-        return text
+        return 200, text, text
 
     logger.info("KO %s"%text)
     sleep(0.2)
 
-def execute(args):
-    data = normal_execution(args)
-    if data is None:
-        logger.warn("Entering Recovery")
+@retry()
+def recovery_execution(args):
+    try:
         result = process_check_result(args, recovery=True)
+
         if result is not None:
-            logger.info("process_check_results OK")
-            return result
+            logger.info("recovery process_check_results OK")
+            return 200, result, 
+        
+        logger.info("recovery process_check_results KO %s"%result)
+
+    except Exception as e:
+        logger.error("The recovery mode encountered the following error [%s]"%str(e))
+    
+    sleep(0.2)
+
 
 ####################################################################################################
 # Arguments parsing
@@ -66,13 +74,22 @@ def run_client():
     logger.info("Running with arguments %s"%args_to_print)
 
     logger.info("START")
-    result = execute(args)
+    scode, result, _ = normal_execution(args)
     logger.info("STOP")
 
-    if result is None:
-        logger.warn("The packet could not be sent. The arguments were: %s"%args)
-        with open("lost_packets.log", "a") as f:
-            f.write(
-                json.dumps(args)
-                + "\n"
-            )
+    if scode == 200:
+        return
+    
+    logger.warn("Entering Recovery")
+    scode, result, _ = recovery_execution(args)
+    logger.warn("Exiting Recovery")
+        
+    if result == 200:
+        return
+    
+    logger.error("The packet could not be sent. The arguments were: %s"%args)
+    with open(args["lost_packets_path"], "a") as f:
+        f.write(
+            json.dumps(args)
+            + "\n"
+        )
