@@ -1,5 +1,5 @@
 {
-    "neteye_url":"https://monitoring.irideos.it:5665",
+    "neteye_url":"https://monitor.irideos.it:5665",
     "proxy_ip":"127.0.0.1",
     "proxy_port":9966,
     "user":"director",
